@@ -10,7 +10,7 @@ public abstract class Posicion {
 		opciones.position(position);
 		opciones.title(titulo);
 		opciones.snippet(info);
-		opciones.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+		opciones.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
 	}
 
 }
