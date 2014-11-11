@@ -2,14 +2,16 @@ package com.napbusTeam.napbus;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 
 public class ActivityMapa extends FragmentActivity {
 
-public static final LatLng DESTINO = new LatLng(0.0, 0.0);
+public static final LatLng DESTINO = new LatLng(addClickListener());
 GoogleMap mMap = null;
 
     @Override
@@ -17,8 +19,7 @@ GoogleMap mMap = null;
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mapa);
 	setUpMapIfNeeded(); //Llama a cargar al mapa
-	setMarker(DESTINO,"Destino",""); //Seteamos el marcador de destino
-	addClickListener();
+	setMarker(DESTINO,"Destino","Alarma sonara al llegar aquí"); //Seteamos el marcador de destino
     }
 
 	private void addClickListener(){
@@ -45,14 +46,11 @@ GoogleMap mMap = null;
 	}
 
 	private void setMarker(LatLng position, String titulo, String info) {
-	  // Agregamos marcadores para indicar sitios de interéses.
 	  Marker myMaker = mMap.addMarker(new MarkerOptions()
 	       .position(position)
 	       .title(titulo)  //Agrega un titulo al marcador
 	       .snippet(info)   //Agrega información detalle relacionada con el marcador 
 	       .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))); //Color del marcador
 	}
-
-}
 
 }
