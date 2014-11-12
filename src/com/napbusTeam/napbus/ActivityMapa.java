@@ -17,16 +17,42 @@ public class ActivityMapa extends FragmentActivity {
 
 GoogleMap mMap = null;
 
+    private static final long MINIMUM_DISTANCECHANGE_FOR_UPDATE = 1; // in Meters
+    private static final long MINIMUM_TIME_BETWEEN_UPDATE = 1000; // in Milliseconds
+	     
+    private static final long POINT_RADIUS = 1000; // in Meters
+    private static final long PROX_ALERT_EXPIRATION = -1;
+	 
+    private static final String POINT_LATITUDE_KEY = "POINT_LATITUDE_KEY";
+    private static final String POINT_LONGITUDE_KEY = "POINT_LONGITUDE_KEY";
+	     
+    private static final String PROX_ALERT_INTENT =
+         "com.javacodegeeks.android.lbs.ProximityAlert";
+     
+    private LocationManager locationManager;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mapa);
 		setUpMapIfNeeded(); //Llama a cargar al mapa
 		addClickListener();
+		locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+
+        locationManager.requestLocationUpdates(
+                    LocationManager.GPS_PROVIDER,
+                    MINIMUM_TIME_BETWEEN_UPDATE,
+                    MINIMUM_DISTANCECHANGE_FOR_UPDATE,
+                    new MyLocationListener()
+    );
     }
 
     private void addClickListener(){
-    	   mMap.setOnMapClickListener(new ClickListener(mMap));
+    	   mMap.setOnMapClickListener(new ClickListener(mMap){
+   		public void onClick (View v){
+	    		saveProxAlertPoint();
+    		}
+    	   });
     	   }
 
 	private void setUpMapIfNeeded() {
@@ -64,6 +90,73 @@ GoogleMap mMap = null;
 	      }
 	      }
 	   }
+	   private void saveProxAlertPoint() {
+		Toast.makeText(this, "Dentro del saveProxPoint!!!!!!", Toast.LENGTH_LONG);
+		Location location =
+        locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+		if (location==null) {
+		    Toast.makeText(this, "No last known location. Aborting...",
+		        Toast.LENGTH_LONG).show();
+		    return;
+		}
+		saveCoordinatesInPreferences((float)location.getLatitude(),
+               (float)location.getLongitude());
+
+		addProximityAlert(location.getLatitude(), location.getLongitude());
+	}
+				 
+    private void saveCoordinatesInPreferences(float latitude, float longitude) {
+		// TODO Auto-generated method stub
+    	SharedPreferences prefs =
+	       this.getSharedPreferences(getClass().getSimpleName(),
+	                       Context.MODE_PRIVATE);
+	    SharedPreferences.Editor prefsEditor = prefs.edit();
+	    prefsEditor.putFloat(POINT_LATITUDE_KEY, latitude);
+	    prefsEditor.putFloat(POINT_LONGITUDE_KEY, longitude);
+	    prefsEditor.commit();
+	}
+
+	private void addProximityAlert(double latitude, double longitude) {
+				         
+        Intent intent = new Intent(PROX_ALERT_INTENT);
+        PendingIntent proximityIntent = PendingIntent.getBroadcast(this, 0, intent, 0);
+				
+	    locationManager.addProximityAlert(
+	        latitude, // the latitude of the central point of the alert region
+	        longitude, // the longitude of the central point of the alert region
+	        POINT_RADIUS, // the radius of the central point of the alert region, in meters
+	        PROX_ALERT_EXPIRATION, // time for this proximity alert, in milliseconds, or -1 to indicate no expiration
+	        proximityIntent // will be used to generate an Intent to fire when entry to or exit from the alert region is detected
+	    		);
+			         
+       IntentFilter filter = new IntentFilter(PROX_ALERT_INTENT); 
+       registerReceiver(new ProximityIntentReceiver(), filter);	
+	}
+
+	private Location retrievelocationFromPreferences() {
+		        SharedPreferences prefs =
+		           this.getSharedPreferences(getClass().getSimpleName(),
+		                           Context.MODE_PRIVATE);
+		        Location location = new Location("POINT_LOCATION");
+		        location.setLatitude(prefs.getFloat(POINT_LATITUDE_KEY, 0));
+		        location.setLongitude(prefs.getFloat(POINT_LONGITUDE_KEY, 0));
+		        return location;
+		}
+	
+	public class MyLocationListener implements LocationListener {
+	    public void onLocationChanged(Location location) {
+	        Location pointLocation = retrievelocationFromPreferences();
+	        float distance = location.distanceTo(pointLocation);
+	        Toast.makeText(Map.this,
+	                "Distance from Point:"+distance, Toast.LENGTH_LONG).show();
+	    }
+	    public void onStatusChanged(String s, int i, Bundle b) {           
+	    }
+	    public void onProviderDisabled(String s) {
+	    }
+	    public void onProviderEnabled(String s) {           
+	    }
+	}
 	}
 
 
